@@ -9,7 +9,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
-import android.view.Surface;
+
 import android.view.View;
 import android.widget.MediaController;
 
@@ -17,43 +17,24 @@ import android.widget.MediaController;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.DefaultRenderersFactory;
-import com.google.android.exoplayer2.ExoPlaybackException;
-import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.ExoPlayerFactory;
 
-import com.google.android.exoplayer2.Format;
-import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 
-import com.google.android.exoplayer2.Timeline;
-import com.google.android.exoplayer2.audio.AudioRendererEventListener;
-import com.google.android.exoplayer2.decoder.DecoderCounters;
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
 import com.google.android.exoplayer2.source.ExtractorMediaSource;
 import com.google.android.exoplayer2.source.MediaSource;
 
-import com.google.android.exoplayer2.source.TrackGroupArray;
-import com.google.android.exoplayer2.source.dash.DashChunkSource;
-import com.google.android.exoplayer2.source.dash.DashMediaSource;
-import com.google.android.exoplayer2.source.dash.DefaultDashChunkSource;
-import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 
-import com.google.android.exoplayer2.trackselection.TrackSelection;
-import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
-
 import com.google.android.exoplayer2.ui.SimpleExoPlayerView;
-import com.google.android.exoplayer2.upstream.DataSource;
-import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
 import com.google.android.exoplayer2.util.Util;
-import com.google.android.exoplayer2.video.VideoRendererEventListener;
 
 
 public class ReproductorActivity extends AppCompatActivity  implements MediaController.MediaPlayerControl{
 
-
-    private static final DefaultBandwidthMeter BANDWIDTH_METER = new DefaultBandwidthMeter(); //youtube
+    private static final String TAG = "ReproductorActivity";
 
     private SimpleExoPlayerView playerView;
     private SimpleExoPlayer player;
@@ -64,8 +45,6 @@ public class ReproductorActivity extends AppCompatActivity  implements MediaCont
     private String url;
     private String tipo;
 
-    private ComponentListener componentListener;
-
 
 
     @Override
@@ -74,7 +53,7 @@ public class ReproductorActivity extends AppCompatActivity  implements MediaCont
         setContentView(R.layout.activity_reproductor);
         clearResumePosition();
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-        componentListener = new ComponentListener();
+
 
         playerView = (SimpleExoPlayerView) findViewById(R.id.video_view);
 
@@ -91,7 +70,7 @@ public class ReproductorActivity extends AppCompatActivity  implements MediaCont
                         if (!visible) {
                             showSystemUI();
                         } else {
-                            hideSystemUi();
+                            hideSystemUI();
                         }
                         return true;
                     }
@@ -112,7 +91,7 @@ public class ReproductorActivity extends AppCompatActivity  implements MediaCont
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
         if (hasFocus) {
-            hideSystemUi();
+            hideSystemUI();
         }
     }
 
@@ -149,26 +128,6 @@ public class ReproductorActivity extends AppCompatActivity  implements MediaCont
         player.prepare(mediaSource, true, false);
     }
 
-    private void initializePlayerYoutube() {
-        if (player == null) {
-
-            TrackSelection.Factory adaptiveTrackSelectionFactory =
-                    new AdaptiveTrackSelection.Factory(BANDWIDTH_METER);
-
-            player = ExoPlayerFactory.newSimpleInstance(new DefaultRenderersFactory(this),
-                    new DefaultTrackSelector(adaptiveTrackSelectionFactory), new DefaultLoadControl());
-            player.addListener(componentListener);
-            player.setVideoDebugListener(componentListener);
-            player.setAudioDebugListener(componentListener);
-            playerView.setPlayer(player);
-            player.setPlayWhenReady(playWhenReady);
-            player.seekTo(currentWindow, playbackPosition);
-        }
-        MediaSource mediaSource = buildMediaSourceYoutube(Uri.parse(getResources().getString(R.string.media_url_dash)));
-        player.prepare(mediaSource, true, false);
-
-
-    }
 
 
     private MediaSource buildMediaSource(Uri uri) {
@@ -176,14 +135,6 @@ public class ReproductorActivity extends AppCompatActivity  implements MediaCont
                 new DefaultHttpDataSourceFactory("ua"),
                 new DefaultExtractorsFactory(), null, null);
     }
-
-    private MediaSource buildMediaSourceYoutube(Uri uri) {
-        DataSource.Factory dataSourceFactory = new DefaultHttpDataSourceFactory("ua", BANDWIDTH_METER);
-        DashChunkSource.Factory dashChunkSourceFactory = new DefaultDashChunkSource.Factory(
-                dataSourceFactory);
-        return new DashMediaSource(uri, dataSourceFactory, dashChunkSourceFactory, null, null);
-    }
-
 
 
     @Override
@@ -193,8 +144,6 @@ public class ReproductorActivity extends AppCompatActivity  implements MediaCont
 
             if (tipo.equals("mp4")) {
                 initializePlayer();
-            }else{
-                initializePlayerYoutube();
             }
             start();
         }
@@ -212,8 +161,6 @@ public class ReproductorActivity extends AppCompatActivity  implements MediaCont
 
             if (tipo.equals("mp4")) {
                 initializePlayer();
-            }else{
-                initializePlayerYoutube();
             }
             start();
 
@@ -222,7 +169,7 @@ public class ReproductorActivity extends AppCompatActivity  implements MediaCont
     }
 
 
-    private void hideSystemUi() {
+    private void hideSystemUI() {
         playerView.hideController();
         playerView.setSystemUiVisibility(
                  View.SYSTEM_UI_FLAG_LOW_PROFILE
@@ -328,109 +275,4 @@ public class ReproductorActivity extends AppCompatActivity  implements MediaCont
     }
 
 
-
-//
-    private class ComponentListener implements ExoPlayer.EventListener, VideoRendererEventListener,
-            AudioRendererEventListener {
-
-        @Override
-        public void onTimelineChanged(Timeline timeline, Object manifest) {
-
-        }
-
-        @Override
-        public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
-
-        }
-
-        @Override
-        public void onLoadingChanged(boolean isLoading) {
-
-        }
-
-        @Override
-        public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
-
-        }
-
-        @Override
-        public void onPlayerError(ExoPlaybackException error) {
-
-        }
-
-        @Override
-        public void onPositionDiscontinuity() {
-
-        }
-
-        @Override
-        public void onPlaybackParametersChanged(PlaybackParameters playbackParameters) {
-
-        }
-
-        @Override
-        public void onAudioEnabled(DecoderCounters counters) {
-
-        }
-
-        @Override
-        public void onAudioSessionId(int audioSessionId) {
-
-        }
-
-        @Override
-        public void onAudioDecoderInitialized(String decoderName, long initializedTimestampMs, long initializationDurationMs) {
-
-        }
-
-        @Override
-        public void onAudioInputFormatChanged(Format format) {
-
-        }
-
-        @Override
-        public void onAudioTrackUnderrun(int bufferSize, long bufferSizeMs, long elapsedSinceLastFeedMs) {
-
-        }
-
-        @Override
-        public void onAudioDisabled(DecoderCounters counters) {
-
-        }
-
-        @Override
-        public void onVideoEnabled(DecoderCounters counters) {
-
-        }
-
-        @Override
-        public void onVideoDecoderInitialized(String decoderName, long initializedTimestampMs, long initializationDurationMs) {
-
-        }
-
-        @Override
-        public void onVideoInputFormatChanged(Format format) {
-
-        }
-
-        @Override
-        public void onDroppedFrames(int count, long elapsedMs) {
-
-        }
-
-        @Override
-        public void onVideoSizeChanged(int width, int height, int unappliedRotationDegrees, float pixelWidthHeightRatio) {
-
-        }
-
-        @Override
-        public void onRenderedFirstFrame(Surface surface) {
-
-        }
-
-        @Override
-        public void onVideoDisabled(DecoderCounters counters) {
-
-        }
-    }
 }
